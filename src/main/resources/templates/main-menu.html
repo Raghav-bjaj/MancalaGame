@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mancala - Choose Mode</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="main-menu">
+    <h1>Welcome to Mancala!</h1>
+    <form th:action="@{/play-offline}" method="get">
+        <button type="submit">Play Offline</button>
+    </form>
+    <form th:action="@{/online-options}" method="get">
+        <button type="submit">Play Online</button>
+    </form>
+</div>
+</body>
+</html>

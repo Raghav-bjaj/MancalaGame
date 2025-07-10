@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mancala Online</title>
+    <!-- Your external CSS file -->
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <!-- Include SockJS and Stomp.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>Online Mancala</h1>
+
+    <!-- Area for Game Options (Host/Join) -->
+    <!-- Initial state: visible by default, will be hidden by JS -->
+    <div id="gameOptions" class="card">
+        <h2>Start a New Game</h2>
+        <button id="createGameButton" type="button" class="button">Host New Game</button>
+
+        <h2>Join an Existing Game</h2>
+        <input type="text" id="joinGameId" placeholder="Enter Game ID" class="input-field">
+        <button id="joinGameButton" type="button" class="button">Join Game</button>
+    </div>
+
+    <!-- Area for Game Play -->
+    <!-- Initial state: hidden by default, will be shown by JS -->
+    <div id="gameArea" class="card" style="display: none;">
+        <h2>Mancala Game</h2>
+        <p id="displayGameId" class="game-info"></p>
+        <p id="displayPlayerRole" class="game-info"></p>
+        <p id="statusMessage" class="game-status"></p>
+        <p id="errorMessage" class="error-message" style="display: none;"></p>
+
+        <div id="online-game-board-container" class="mancala-board">
+            <!-- Mancala board pits and stores will be rendered here by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Back to Main Menu Button -->
+    <div class="navigation-buttons">
+        <a href="/" class="button back-button">Back to Main Menu</a>
+    </div>
+</div>
+
+<!-- Link to your online-game.js script -->
+<script th:src="@{/js/online-game.js}"></script>
+</body>
+</html>

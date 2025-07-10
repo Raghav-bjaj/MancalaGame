@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mancala Game - Offline</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script th:inline="javascript">
+        // Pass the server-side game object and error message to JavaScript
+        var initialGame = [[${game}]];
+        var initialErrorMessage = [[${errorMessage}]];
+    </script>
+</head>
+<body>
+<div class="game-container">
+    <h1>Offline Mancala</h1>
+    <div id="status-message" class="status-message"></div>
+    <div id="error-message" class="error-message"></div>
+
+    <div id="game-board-container" class="mancala-board">
+        <!-- Board elements will be rendered by JavaScript here -->
+    </div>
+
+    <div class="game-controls">
+        <form id="newGameForm" action="/newGame" method="post">
+            <button type="submit">New Game</button>
+        </form>
+        <a th:href="@{/}" class="button home-button">Main Menu</a>
+    </div>
+</div>
+<script th:src="@{/js/offline-game.js}"></script>
+</body>
+</html>

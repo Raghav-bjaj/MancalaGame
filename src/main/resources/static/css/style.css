@@ -1,0 +1,339 @@
+/* src/main/resources/static/css/style.css */
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f0f4f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    flex-direction: column;
+    padding: 1rem; /* Added padding for small screens */
+    box-sizing: border-box; /* Include padding in element's total width and height */
+}
+
+.container {
+    background-color: #ffffff;
+    padding: 2.5rem;
+    border-radius: 1.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 90%;
+    width: 800px;
+    margin: 1rem;
+    box-sizing: border-box;
+}
+
+.card {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+}
+
+
+h1 {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+    font-weight: bold;
+}
+
+h2 {
+    font-size: 1.8rem;
+    color: #34495e;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.button {
+    background-color: #4CAF50; /* Green */
+    color: white;
+    padding: 0.8rem 1.8rem;
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    font-weight: 600;
+    text-decoration: none; /* For anchor tags styled as buttons */
+    display: inline-flex; /* For consistent padding and centering */
+    justify-content: center;
+    align-items: center;
+}
+
+.button:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.input-field {
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    margin-top: 1rem; /* Space from above element */
+    margin-bottom: 0.5rem; /* Space to button below */
+}
+
+.message {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.game-status {
+    background-color: #e0f7fa;
+    color: #007bff;
+}
+
+.error-message {
+    background-color: #ffe0e0;
+    color: #dc3545;
+    /* display: none; Handled by JS inline style now */
+}
+
+.game-info {
+    margin-top: 1.5rem;
+    font-size: 1.1rem;
+    color: #34495e;
+    font-weight: 500;
+}
+
+.mancala-board {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between rows */
+    background-color: #f8f9fa;
+    border: 2px solid #ccc;
+    border-radius: 1rem;
+    padding: 1rem;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+    width: 100%; /* Take full width of its parent */
+    max-width: 700px; /* Max width for larger screens */
+    margin-top: 1.5rem;
+}
+
+.player-pits {
+    display: flex;
+    justify-content: space-around;
+    gap: 10px;
+    padding: 10px 0;
+}
+
+.top-row {
+    flex-direction: row-reverse; /* Pits 12 to 7 */
+}
+
+.bottom-row {
+    flex-direction: row; /* Pits 0 to 5 */
+}
+
+.pit {
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-radius: 50%; /* Make it round */
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: #343a40;
+    font-size: 1.1rem;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.pit button {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #28a745; /* Active pit color */
+    color: white;
+    padding: 0;
+    font-size: 1.1rem;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.pit button:hover:not(:disabled) {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+
+.pit button:disabled {
+    background-color: #6c757d; /* Disabled pit color */
+    cursor: not-allowed;
+    color: #f8f9fa;
+    box-shadow: none;
+}
+
+.pit .active-pit {
+    background-color: #007bff; /* Highlight active player's pits */
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5);
+}
+
+.stores-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.store {
+    background-color: #cce5ff;
+    border: 1px solid #a8d7ff;
+    border-radius: 1rem;
+    width: 120px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: #004085;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    padding: 0.5rem;
+}
+
+.store-label {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.store-stones {
+    font-size: 1.5rem;
+    font-weight: bolder;
+}
+
+.board-spacer {
+    flex-grow: 1;
+    margin: 0 20px; /* Space between stores */
+}
+
+.navigation-buttons {
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 800px;
+    text-align: center;
+}
+
+.back-button {
+    background-color: #6c757d;
+}
+.back-button:hover {
+    background-color: #5a6268;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 1.5rem;
+        margin: 0.5rem;
+        width: 95%;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .button {
+        padding: 0.7rem 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    .input-field {
+        font-size: 0.9rem;
+        padding: 0.6rem 0.8rem;
+    }
+
+    .pit {
+        width: 50px;
+        height: 50px;
+        font-size: 1rem;
+    }
+    .pit button {
+        font-size: 1rem;
+    }
+
+    .store {
+        width: 100px;
+        height: 70px;
+        font-size: 1.1rem;
+        padding: 0.25rem;
+    }
+    .store-label {
+        font-size: 0.8rem;
+    }
+    .store-stones {
+        font-size: 1.3rem;
+    }
+
+    .board-spacer {
+        margin: 0 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 1rem;
+    }
+    .button-group {
+        gap: 1rem;
+    }
+    .pit {
+        width: 45px;
+        height: 45px;
+        font-size: 0.9rem;
+    }
+    .pit button {
+        font-size: 0.9rem;
+    }
+    .store {
+        width: 80px;
+        height: 60px;
+        font-size: 1rem;
+    }
+    .store-stones {
+        font-size: 1.1rem;
+    }
+}

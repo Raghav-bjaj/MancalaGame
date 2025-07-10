@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mancala Game</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="game-container">
+    <h1>Mancala!</h1>
+
+    <p>Current Player (0=P1, 1=P2): <span th:text="${game.getCurrentPlayer()}"></span></p>
+    <p>Is Game Over?: <span th:text="${game.isGameOver()}"></span></p>
+    <p class="status-message" th:text="${statusMessage}"></p>
+    <p th:if="${errorMessage}" class="error-message" th:text="${errorMessage}"></p>
+
+    <div class="mancala-board">
+        <div class="store player2-store-display">
+            <span class="store-label">Player 2 Store</span>
+            <span class="store-stones" th:text="${game.getStonesInPit(13)}">0</span>
+        </div>
+
+        <div class="pits-rows-container">
+            <div class="player-pits player2-pits-display">
+                <div th:each="i : ${#numbers.sequence(12, 7, -1)}" class="pit">
+                    <form th:action="@{/move}" method="post">
+                        <input type="hidden" name="pitIndex" th:value="${i}" />
+                        <button type="submit" th:disabled="${game.getCurrentPlayer() != 1 or game.isGameOver() or game.getStonesInPit(i) == 0}"
+                                th:classappend="${game.getCurrentPlayer() == 1 and game.getStonesInPit(i) > 0 and !game.isGameOver()} ? 'active-pit' : ''">
+                            <span class="pit-stones" th:text="${game.getStonesInPit(i)}">4</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="player-pits player1-pits-display">
+                <div th:each="i : ${#numbers.sequence(0, 5)}" class="pit">
+                    <form th:action="@{/move}" method="post">
+                        <input type="hidden" name="pitIndex" th:value="${i}" />
+                        <button type="submit" th:disabled="${game.getCurrentPlayer() != 0 or game.isGameOver() or game.getStonesInPit(i) == 0}"
+                                th:classappend="${game.getCurrentPlayer() == 0 and game.getStonesInPit(i) > 0 and !game.isGameOver()} ? 'active-pit' : ''">
+                            <span class="pit-stones" th:text="${game.getStonesInPit(i)}">4</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="store player1-store-display">
+            <span class="store-label">Player 1 Store</span>
+            <span class="store-stones" th:text="${game.getStonesInPit(6)}">0</span>
+        </div>
+    </div>
+
+    <div class="game-controls">
+        <form th:action="@{/newGame}" method="post">
+            <button type="submit">Start New Game</button>
+        </form>
+
+        <form th:action="@{/}" method="get">
+            <button type="submit" class="home-button">Home</button>
+        </form>
+    </div>
+</div>
+</body>
+</html>

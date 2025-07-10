@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mancala - Online Options</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* This inline style block is from previous instructions.
+           You can keep it here, or move these styles to style.css
+           if they are not already there and you prefer external stylesheets.
+        */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .online-menu {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            text-align: center;
+            /* Added max-width for better control */
+            max-width: 400px;
+            width: 100%;
+        }
+        .online-menu h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+        .online-menu button {
+            display: block;
+            width: 200px;
+            padding: 12px;
+            margin: 15px auto;
+            font-size: 1.1em;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        .online-menu button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+        .online-menu input[type="text"] {
+            padding: 10px;
+            margin-bottom: 15px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+            text-align: center;
+        }
+        /* New style for the home button within online-menu, similar to game-controls */
+        .online-menu .home-button {
+            background-color: #6c757d; /* Gray color for Home button */
+            margin-top: 25px; /* Add some space from the forms above */
+        }
+        .online-menu .home-button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+<div class="online-menu">
+    <h1>Online Play</h1>
+    <form th:action="@{/host-game}" method="post">
+        <button type="submit">Host New Game (Player 1)</button>
+    </form>
+    <hr style="margin: 30px auto; width: 50%; border-color: #eee;">
+    <form th:action="@{/join-game}" method="post">
+        <input type="text" name="gameId" placeholder="Enter Game ID" required>
+        <button type="submit">Join Game (Player 2)</button>
+    </form>
+
+    <form th:action="@{/}" method="get">
+        <button type="submit" class="home-button">Home</button>
+    </form>
+
+    <p th:if="${errorMessage}" class="error-message" th:text="${errorMessage}"></p>
+</div>
+
+<script>
+    // Function to get a unique session ID (could be more robust, but good for now)
+    // This uses localStorage to keep the same session ID across page reloads for the same browser.
+    function getSessionId() {
+        let sessionId = localStorage.getItem('mancalaSessionId');
+        if (!sessionId) {
+            // Generate a random string as a simple unique ID
+            sessionId = 'session-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('mancalaSessionId', sessionId);
+        }
+        return sessionId;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const sessionId = getSessionId();
+
+        // Add hidden input with session ID to the "Host New Game" form
+        const hostForm = document.querySelector('form[action$="/host-game"]');
+        if (hostForm) {
+            const hostSessionInput = document.createElement('input');
+            hostSessionInput.type = 'hidden';
+            hostSessionInput.name = 'sessionId'; // Name matches @RequestParam("sessionId") in controller
+            hostSessionInput.value = sessionId;
+            hostForm.appendChild(hostSessionInput);
+        }
+
+        // Add hidden input with session ID to the "Join Game" form
+        const joinForm = document.querySelector('form[action$="/join-game"]');
+        if (joinForm) {
+            const joinSessionInput = document.createElement('input');
+            joinSessionInput.type = 'hidden';
+            joinSessionInput.name = 'sessionId';
+            joinSessionInput.value = sessionId;
+            joinForm.appendChild(joinSessionInput);
+        }
+    });
+</script>
+</body>
+</html>
