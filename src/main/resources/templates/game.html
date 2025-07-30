@@ -63,5 +63,13 @@
         </form>
     </div>
 </div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    window.initialGame = /*[[${game}]]*/ null;
+    window.initialErrorMessage = /*[[${errorMessage}]]*/ null;
+    /*]]>*/
+</script>
+
+<script th:src="@{/js/offline-game.js}"></script>
 </body>
 </html>

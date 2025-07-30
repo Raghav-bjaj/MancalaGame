@@ -100,11 +100,10 @@ public class MancalaGameController {
      * The host/join functionality is handled by JavaScript on the client-side using WebSockets.
      * @return The name of the online game Thymeleaf template.
      */
-    @GetMapping("/online-options") // This is the route linked from main-menu.html
+    @GetMapping("/online-options")
     public String showOnlineOptions() {
-        // This will now directly load the online-game.html, which contains the host/join UI
-        // and the WebSocket logic.
-        return "online-options";
+        return "online-game";
+
     }
 
     /**
