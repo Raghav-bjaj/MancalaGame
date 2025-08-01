@@ -21,12 +21,11 @@
             <p id="displayGameId"></p>
             <p id="displayPlayerRole"></p>
         </div>
-
         <div id="online-game-board-container" class="mancala-board"></div>
     </div>
 
     <p id="statusMessage" class="status-message"></p>
-    <p id="errorMessage" class="error-message"></p>
+    <p id="errorMessage" class="error-message" style="display: none;"></p>
 
     <div class="game-controls">
         <a th:href="@{/}" class="home-button" style="text-decoration: none; padding: 10px 20px;">Home</a>
@@ -35,8 +34,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-
 <script th:src="@{/js/online-game.js}"></script>
-
 </body>
 </html>
