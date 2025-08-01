@@ -54,6 +54,24 @@ public class MancalaGame implements Serializable {
         this.winner = -1; // No winner initially, or indicates a draw if game ends this way
         logger.info("New MancalaGame initialized: board={}", Arrays.toString(board));
     }
+    // Add this new method inside your MancalaGame.java class
+
+    public void reset() {
+        this.board = new int[14];
+        for (int i = PLAYER1_PIT_START; i <= PLAYER1_PIT_END; i++) {
+            this.board[i] = 4;
+        }
+        for (int i = PLAYER2_PIT_START; i <= PLAYER2_PIT_END; i++) {
+            this.board[i] = 4;
+        }
+        this.board[PLAYER1_STORE] = 0;
+        this.board[PLAYER2_STORE] = 0;
+
+        this.currentPlayer = 0;
+        this.gameOver = false;
+        this.winner = -1;
+        logger.info("MancalaGame has been reset to its initial state.");
+    }
 
     // --- Getters and Setters ---
 

@@ -10,10 +10,10 @@
     <h1>Mancala Online</h1>
 
     <div id="gameOptions">
-        <button id="createGameButton">Host New Game</button>
+        <button id="createGameButton" class="play-button">Host New Game</button>
         <hr style="margin: 20px auto; width: 50%;">
         <input type="text" id="joinGameId" placeholder="Enter Game ID">
-        <button id="joinGameButton">Join Game</button>
+        <button id="joinGameButton" class="info-button">Join Game</button>
     </div>
 
     <div id="gameArea" style="display: none;">
@@ -27,13 +27,17 @@
     <p id="statusMessage" class="status-message"></p>
     <p id="errorMessage" class="error-message" style="display: none;"></p>
 
-    <div class="game-controls">
-        <a th:href="@{/}" class="home-button" style="text-decoration: none; padding: 10px 20px;">Home</a>
+    <div id="inGameControls" class="game-controls">
+        <a th:href="@{/}" class="home-button">Home</a>
+    </div>
+
+    <div id="endGameControls" class="game-controls" style="display: none;">
+        <button id="playAgainButton" class="play-button">Play Again</button>
+        <a th:href="@{/}" class="home-button">Main Menu</a>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.0/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
-<script th:src="@{/js/online-game.js}"></script>
-</body>
+<script th:src="@{/js/online-game.js(v='1.1')}"></script> </body>
 </html>

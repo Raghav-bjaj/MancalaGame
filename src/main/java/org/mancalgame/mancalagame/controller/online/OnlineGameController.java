@@ -2,6 +2,8 @@ package org.mancalgame.mancalagame.controller.online;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.mancalgame.mancalagame.Service.MancalaGameService;
+import org.mancalgame.mancalagame.game.MancalaGame;
 import org.mancalgame.mancalagame.online.OnlineGameManager;
 import org.mancalgame.mancalagame.online.OnlineMancalaGame;
 import org.slf4j.Logger;
@@ -22,8 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.mancalgame.mancalagame.game.MancalaGame;
-
 @Controller
 public class OnlineGameController {
 
@@ -31,13 +31,15 @@ public class OnlineGameController {
 
     private final OnlineGameManager gameManager;
     private final SimpMessagingTemplate messagingTemplate;
+    private final MancalaGameService mancalaGameService;
 
-    public OnlineGameController(OnlineGameManager gameManager, SimpMessagingTemplate messagingTemplate, ObjectMapper objectMapper) {
+    public OnlineGameController(OnlineGameManager gameManager, SimpMessagingTemplate messagingTemplate, MancalaGameService mancalaGameService) {
         this.gameManager = gameManager;
         this.messagingTemplate = messagingTemplate;
+        this.mancalaGameService = mancalaGameService;
     }
 
-    // DTOs for client-server communication
+    // --- UPDATED: GameStateDTO now includes rematch flags and a new constructor ---
     public static class GameStateDTO {
         private String gameId;
         @JsonFormat(shape = JsonFormat.Shape.ARRAY)
@@ -46,16 +48,22 @@ public class OnlineGameController {
         private int winner;
         private boolean gameOver;
         private String gameStatus;
+        private boolean player1WantsRematch; // New
+        private boolean player2WantsRematch; // New
 
         public GameStateDTO() {}
 
-        public GameStateDTO(String gameId, int[] board, int currentPlayer, boolean gameOver, int winner, String gameStatus) {
-            this.gameId = gameId;
-            this.board = (board != null) ? Arrays.stream(board).boxed().collect(Collectors.toList()) : null;
-            this.currentPlayer = currentPlayer;
-            this.gameOver = gameOver;
-            this.winner = winner;
-            this.gameStatus = gameStatus;
+        // New constructor to simplify creation
+        public GameStateDTO(OnlineMancalaGame game) {
+            MancalaGame coreGame = game.getMancalaGame();
+            this.gameId = game.getGameId();
+            this.board = Arrays.stream(coreGame.getBoard()).boxed().collect(Collectors.toList());
+            this.currentPlayer = coreGame.getCurrentPlayer();
+            this.gameOver = coreGame.isGameOver();
+            this.winner = coreGame.getWinner();
+            this.gameStatus = game.getStatus().toString();
+            this.player1WantsRematch = game.isPlayer1WantsRematch();
+            this.player2WantsRematch = game.isPlayer2WantsRematch();
         }
 
         // Getters and Setters
@@ -71,15 +79,17 @@ public class OnlineGameController {
         public void setGameOver(boolean gameOver) { this.gameOver = gameOver; }
         public String getGameStatus() { return gameStatus; }
         public void setGameStatus(String gameStatus) { this.gameStatus = gameStatus; }
+        public boolean isPlayer1WantsRematch() { return player1WantsRematch; }
+        public void setPlayer1WantsRematch(boolean player1WantsRematch) { this.player1WantsRematch = player1WantsRematch; }
+        public boolean isPlayer2WantsRematch() { return player2WantsRematch; }
+        public void setPlayer2WantsRematch(boolean player2WantsRematch) { this.player2WantsRematch = player2WantsRematch; }
     }
 
     public static class InitialGameDetailsDTO extends GameStateDTO {
         private int assignedPlayerRole;
 
-        public InitialGameDetailsDTO() { super(); }
-
-        public InitialGameDetailsDTO(String gameId, int[] board, int currentPlayer, boolean gameOver, int winner, String gameStatus, int assignedPlayerRole) {
-            super(gameId, board, currentPlayer, gameOver, winner, gameStatus);
+        public InitialGameDetailsDTO(OnlineMancalaGame game, int assignedPlayerRole) {
+            super(game);
             this.assignedPlayerRole = assignedPlayerRole;
         }
 
@@ -93,54 +103,57 @@ public class OnlineGameController {
     @SendToUser(destinations = "/queue/game.details", broadcast = false)
     public InitialGameDetailsDTO hostGame(SimpMessageHeaderAccessor headerAccessor) {
         String sessionId = headerAccessor.getSessionId();
-        logger.info("Session [{}] requested to host a new game.", sessionId);
-
-        OnlineMancalaGame newGame = gameManager.createGame();
-        OnlineMancalaGame game = gameManager.addPlayerToGame(newGame.getGameId(), sessionId)
-                .orElseThrow(() -> new RuntimeException("Failed to create and join game."));
-
-        logger.info("Session [{}] successfully hosted game [{}].", sessionId, game.getGameId());
-        return new InitialGameDetailsDTO(
-                game.getGameId(),
-                game.getMancalaGame().getBoard(),
-                game.getMancalaGame().getCurrentPlayer(),
-                game.getMancalaGame().isGameOver(),
-                game.getMancalaGame().getWinner(),
-                game.getStatus().toString(),
-                0 // Host is always Player 1 (role 0)
-        );
+        OnlineMancalaGame game = gameManager.createGame();
+        gameManager.addPlayerToGame(game.getGameId(), sessionId);
+        return new InitialGameDetailsDTO(game, 0);
     }
 
     @MessageMapping("/game.join")
     @SendToUser(destinations = "/queue/game.details", broadcast = false)
     public InitialGameDetailsDTO joinGame(@Payload JoinGameRequest joinRequest, SimpMessageHeaderAccessor headerAccessor) {
         String sessionId = headerAccessor.getSessionId();
-        String gameId = joinRequest.getGameId(); // This line caused the error
-        logger.info("Session [{}] attempting to join game [{}].", sessionId, gameId);
-
+        String gameId = joinRequest.getGameId();
         OnlineMancalaGame game = gameManager.addPlayerToGame(gameId, sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Game not found, full, or started."));
+                .orElseThrow(() -> new IllegalArgumentException("Game not found, is full, or has already started."));
 
-        GameStateDTO gameStateUpdate = new GameStateDTO(
-                game.getGameId(),
-                game.getMancalaGame().getBoard(),
-                game.getMancalaGame().getCurrentPlayer(),
-                game.getMancalaGame().isGameOver(),
-                game.getMancalaGame().getWinner(),
-                game.getStatus().toString()
-        );
-        messagingTemplate.convertAndSend("/topic/game/" + gameId, gameStateUpdate);
-        logger.info("Session [{}] joined game [{}]. Broadcasted state.", sessionId, gameId);
+        messagingTemplate.convertAndSend("/topic/game/" + gameId, new GameStateDTO(game));
+        return new InitialGameDetailsDTO(game, 1);
+    }
 
-        return new InitialGameDetailsDTO(
-                game.getGameId(),
-                game.getMancalaGame().getBoard(),
-                game.getMancalaGame().getCurrentPlayer(),
-                game.getMancalaGame().isGameOver(),
-                game.getMancalaGame().getWinner(),
-                game.getStatus().toString(),
-                1 // Joiner is always Player 2 (role 1)
-        );
+    // --- NEW: Message mapping for rematch requests ---
+    @MessageMapping("/game.{gameId}.rematch")
+    public void requestRematch(@DestinationVariable String gameId, SimpMessageHeaderAccessor headerAccessor) {
+        String sessionId = headerAccessor.getSessionId();
+        gameManager.getGame(gameId).ifPresent(game -> {
+            synchronized(game) {
+                int role = gameManager.getPlayerRoleInGame(gameId, sessionId);
+                game.setPlayerWantsRematch(role);
+
+                if (game.bothPlayersWantRematch()) {
+                    game.resetForRematch();
+                }
+
+                // Broadcast the updated state to both players
+                messagingTemplate.convertAndSend("/topic/game/" + gameId, new GameStateDTO(game));
+            }
+        });
+    }
+
+    @MessageMapping("/game.{gameId}.move")
+    public void makeMove(@DestinationVariable String gameId, @Payload MoveRequest moveRequest, SimpMessageHeaderAccessor headerAccessor) {
+        String sessionId = headerAccessor.getSessionId();
+        gameManager.getGame(gameId).ifPresent(game -> {
+            synchronized (game) {
+                try {
+                    int role = gameManager.getPlayerRoleInGame(gameId, sessionId);
+                    if (game.makeMove(moveRequest.getPitIndex(), role)) {
+                        messagingTemplate.convertAndSend("/topic/game/" + gameId, new GameStateDTO(game));
+                    }
+                } catch (IllegalArgumentException e) {
+                    messagingTemplate.convertAndSendToUser(sessionId, "/queue/errors", new ErrorDTO(e.getMessage()));
+                }
+            }
+        });
     }
 
     @MessageExceptionHandler
@@ -148,35 +161,6 @@ public class OnlineGameController {
     public ErrorDTO handleException(Throwable throwable) {
         logger.error("Error handling message: {}", throwable.getMessage());
         return new ErrorDTO(throwable.getMessage());
-    }
-
-    @MessageMapping("/game.{gameId}.move")
-    public void makeMove(@DestinationVariable String gameId, @Payload MoveRequest moveRequest, SimpMessageHeaderAccessor headerAccessor) {
-        String sessionId = headerAccessor.getSessionId();
-        int pitIndex = moveRequest.getPitIndex(); // This line caused the error
-
-        gameManager.getGame(gameId).ifPresent(game -> {
-            synchronized (game) {
-                try {
-                    int role = gameManager.getPlayerRoleInGame(gameId, sessionId);
-                    if (role == -1) throw new IllegalArgumentException("You are not an active player in this game.");
-
-                    if (game.makeMove(pitIndex, role)) {
-                        GameStateDTO update = new GameStateDTO(
-                                game.getGameId(),
-                                game.getMancalaGame().getBoard(),
-                                game.getMancalaGame().getCurrentPlayer(),
-                                game.getMancalaGame().isGameOver(),
-                                game.getMancalaGame().getWinner(),
-                                game.getStatus().toString()
-                        );
-                        messagingTemplate.convertAndSend("/topic/game/" + gameId, update);
-                    }
-                } catch (IllegalArgumentException e) {
-                    messagingTemplate.convertAndSendToUser(sessionId, "/queue/errors", new ErrorDTO(e.getMessage()));
-                }
-            }
-        });
     }
 
     @EventListener
@@ -191,16 +175,15 @@ public class OnlineGameController {
         gameManager.removePlayer(event.getSessionId());
     }
 
-    // --- INNER CLASSES WITH GETTERS ADDED BACK ---
     public static class JoinGameRequest {
         private String gameId;
-        public String getGameId() { return gameId; } // This was missing
+        public String getGameId() { return gameId; }
         public void setGameId(String gameId) { this.gameId = gameId; }
     }
 
     public static class MoveRequest {
         private int pitIndex;
-        public int getPitIndex() { return pitIndex; } // This was missing
+        public int getPitIndex() { return pitIndex; }
         public void setPitIndex(int pitIndex) { this.pitIndex = pitIndex; }
     }
 }

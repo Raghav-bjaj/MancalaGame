@@ -3,18 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mancala - Choose Mode</title>
+    <title>Mancala - Main Menu</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <div class="main-menu">
     <h1>Welcome to Mancala!</h1>
     <form th:action="@{/play-offline}" method="get">
-        <button type="submit">Play Offline</button>
+        <button type="submit" class="play-button">Play Offline</button>
     </form>
     <form th:action="@{/online-options}" method="get">
-        <button type="submit">Play Online</button>
+        <button type="submit" class="play-button">Play Online</button>
     </form>
+    <button id="howToPlayBtn" class="info-button">How to Play</button>
 </div>
+
+<div id="rulesModalOverlay" class="modal-overlay">
+    <div class="modal-content">
+        <span id="closeModalBtn" class="close-button">&times;</span>
+        <h2>How to Play Mancala</h2>
+        <h3>Objective</h3>
+        <p>The goal is to collect more stones in your store (the large pit on your right) than your opponent.</p>
+        <h3>Setup</h3>
+        <p>The board consists of two rows of six small pits, and two large stores. Player 1's pits are on the bottom, and Player 2's are on the top. Your store is always to your right.</p>
+        <h3>Gameplay</h3>
+        <ul>
+            <li>On your turn, choose one of the six pits on your side.</li>
+            <li>Pick up all the stones in that pit and distribute them, one by one, into the next pits in an anti-clockwise direction.</li>
+            <li>If you pass over your own store, you drop a stone in it. If you pass over your opponent's store, you skip it.</li>
+        </ul>
+        <h3>Special Rules</h3>
+        <ul>
+            <li><strong>Go Again:</strong> If your last stone lands in your own store, you get another turn.</li>
+            <li><strong>Capture:</strong> If your last stone lands in an empty pit on your side, and the opposite pit on your opponent's side has stones, you capture your stone plus all of the opponent's stones from that opposite pit.</li>
+        </ul>
+        <h3>Winning the Game</h3>
+        <p>The game ends when all six pits on one side of the board are empty. The other player then collects the remaining stones on their side. The player with the most stones in their store wins!</p>
+    </div>
+</div>
+
+<script th:src="@{/js/main-menu.js}"></script>
+
 </body>
 </html>

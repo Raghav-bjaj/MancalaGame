@@ -21,18 +21,23 @@ const displayGameIdElement = document.getElementById('displayGameId');
 const displayPlayerRoleElement = document.getElementById('displayPlayerRole');
 const boardDiv = document.getElementById('online-game-board-container');
 const interactiveButtons = [createGameButton, joinGameButton, joinGameIdInput];
+const inGameControls = document.getElementById('inGameControls');
+const endGameControls = document.getElementById('endGameControls');
+const playAgainButton = document.getElementById('playAgainButton');
 
 // --- Event Listeners ---
 if (createGameButton) createGameButton.addEventListener('click', sendCreateGameMessage);
 if (joinGameButton) joinGameButton.addEventListener('click', sendJoinGameMessage);
+if (playAgainButton) playAgainButton.addEventListener('click', sendRematchRequest);
 
 // --- WebSocket Functions ---
 function connect() {
     stompClient.connect({}, (frame) => {
         isConnected = true;
+        console.log('Connected: ' + frame);
         stompClient.subscribe('/user/queue/game.details', onGameDetailsReceived);
         stompClient.subscribe('/user/queue/errors', onErrorReceived);
-    });
+    }, (error) => { console.error('STOMP connection error: ' + error); });
 }
 
 function ensureTopicSubscription() {
@@ -65,6 +70,13 @@ function makeMove(pitIndex) {
     stompClient.send("/app/game." + gameId + ".move", {}, JSON.stringify({ 'pitIndex': pitIndex }));
 }
 
+function sendRematchRequest() {
+    if (!stompClient.connected || !gameId) return;
+    playAgainButton.disabled = true;
+    playAgainButton.textContent = "Waiting...";
+    stompClient.send("/app/game." + gameId + ".rematch", {}, "{}");
+}
+
 // --- Message Receiving Handlers ---
 function onGameDetailsReceived(payload) {
     let receivedState = JSON.parse(payload.body);
@@ -75,17 +87,28 @@ function onGameDetailsReceived(payload) {
     ensureTopicSubscription();
     gameOptionsDiv.style.display = 'none';
     gameAreaDiv.style.display = 'block';
+    if(inGameControls) inGameControls.style.display = 'none';
     updateGameBoardUI(receivedState);
     updateGameStatusMessage(receivedState);
 }
 
 function onGameStateUpdate(payload) {
     let gameState = JSON.parse(payload.body);
+
+    if (!gameState.gameOver) {
+        if (endGameControls) endGameControls.style.display = 'none';
+        if (playAgainButton) {
+            playAgainButton.disabled = false;
+            playAgainButton.textContent = "Play Again";
+        }
+    }
+
     updateGameBoardUI(gameState);
     updateGameStatusMessage(gameState);
+
     if (gameState.gameStatus === 'FINISHED' || gameState.gameStatus === 'CANCELLED') {
         disablePitClicks();
-        setTimeout(() => window.location.reload(), 5000);
+        if(endGameControls) endGameControls.style.display = 'flex';
     }
 }
 
@@ -109,14 +132,12 @@ function updateGameBoardUI(gameState) {
     const playerStoreLabel = `Your Store (P${playerRole + 1})`;
     const opponentStoreLabel = `Opponent's Store (P${isPlayer1 ? 2 : 1})`;
 
-    // Create Opponent's Pits (Top Row)
     const opponentRow = document.createElement('div');
     opponentRow.className = 'player-pits top-row';
-    for (let i = opponentPits.end; i >= opponentPits.start; i--) { // Counts down for correct L-R visual
+    for (let i = opponentPits.end; i >= opponentPits.start; i--) {
         opponentRow.appendChild(createPitButton(i, gameState.board[i], false));
     }
 
-    // Create Stores
     const storesRow = document.createElement('div');
     storesRow.className = 'stores-row';
     storesRow.appendChild(createStoreElement(opponentStoreIndex, gameState.board[opponentStoreIndex], opponentStoreLabel));
@@ -125,13 +146,16 @@ function updateGameBoardUI(gameState) {
     storesRow.appendChild(spacer);
     storesRow.appendChild(createStoreElement(playerStoreIndex, gameState.board[playerStoreIndex], playerStoreLabel));
 
-    // Create Player's Pits (Bottom Row)
     const playerRow = document.createElement('div');
     playerRow.className = 'player-pits bottom-row';
     const isMyTurn = (gameState.currentPlayer === playerRole);
-    for (let i = playerPits.start; i <= playerPits.end; i++) { // Counts up for correct L-R visual
+    for (let i = playerPits.start; i <= playerPits.end; i++) {
         const isClickable = isMyTurn && !gameState.gameOver && gameState.board[i] > 0;
         playerRow.appendChild(createPitButton(i, gameState.board[i], isClickable));
+    }
+
+    if (isMyTurn && !gameState.gameOver) {
+        playerRow.classList.add('active-turn');
     }
 
     boardDiv.appendChild(opponentRow);
@@ -161,10 +185,46 @@ function createStoreElement(index, stones, label) {
     return storeDiv;
 }
 
-function updateGameStatusMessage(gameState) { /* ... Unchanged ... */ }
-function disablePitClicks() { /* ... Unchanged ... */ }
-function disableGameButtons() { /* ... Unchanged ... */ }
-function enableGameButtons() { /* ... Unchanged ... */ }
+function updateGameStatusMessage(gameState) {
+    errorMessageElement.style.display = 'none';
+    if (gameState.gameOver) {
+        const player1Ready = gameState.player1WantsRematch;
+        const player2Ready = gameState.player2WantsRematch;
+        const myRematchStatus = (playerRole === 0) ? player1Ready : player2Ready;
+        const opponentRematchStatus = (playerRole === 0) ? player2Ready : player1Ready;
+
+        let winnerText = 'It\'s a draw!';
+        if (gameState.winner === playerRole) winnerText = 'You won!';
+        else if (gameState.winner !== -1) winnerText = 'You lost.';
+
+        statusMessageElement.textContent = `Game Over! ${winnerText}`;
+
+        if(playAgainButton) {
+            if (myRematchStatus) {
+                playAgainButton.disabled = true;
+                playAgainButton.textContent = "Waiting...";
+            }
+            if (opponentRematchStatus && !myRematchStatus) {
+                statusMessageElement.textContent += " Your opponent wants a rematch!";
+            }
+        }
+    } else if (gameState.gameStatus === 'WAITING_FOR_PLAYER') {
+        statusMessageElement.textContent = 'Waiting for opponent...';
+    } else if (gameState.gameStatus === 'IN_PROGRESS') {
+        statusMessageElement.textContent = gameState.currentPlayer === playerRole ? 'Your turn.' : "Opponent's turn.";
+    }
+}
+
+function disablePitClicks() {
+    boardDiv.querySelectorAll('.pit-button-element').forEach(button => {
+        button.disabled = true;
+        button.classList.remove('active-pit');
+        button.onclick = null;
+    });
+}
+
+function disableGameButtons() { interactiveButtons.forEach(b => b.disabled = true); }
+function enableGameButtons() { interactiveButtons.forEach(b => b.disabled = false); }
 
 // --- Start Connection ---
 connect();
